@@ -8,7 +8,7 @@
 - **일정 표시**: 추진 내용마다 월~금(또는 토·일 포함) 중 기간을 골라 두면, 표에서 해당 요일 칸이 하나로 합쳐지고 `←──→` 화살표가 들어갑니다. 화살표 대신 `임시 공휴일` 같은 문구도 넣을 수 있습니다.
 - **회의 표기**: `@ 외부회의`, `# 내부회의` 머리 기호를 붙일 수 있고, 표 첫 줄의 범례와 짝을 이룹니다.
 - **표 미리보기**: 저장될 표와 같은 구조를 화면에서 먼저 확인하고, 칸을 눌러 해당 항목으로 바로 이동합니다.
-- **저장**: `DOCX 저장`(A4 가로, 병합된 표 한 장), `XLSX`(같은 표를 엑셀 시트로), `JSON`(다시 불러와 편집).
+- **저장**: `DOCX 저장`(A4 가로, 병합된 표 한 장), `XLSX`(같은 표를 엑셀 시트로), `PPTX`(16:9 슬라이드 한 장), `JSON`(다시 불러와 편집).
 - **자동 보관**: 작성 중인 내용은 브라우저 localStorage에 저장되어 새로고침해도 남아 있습니다.
 
 ## 표 구성
@@ -68,6 +68,7 @@ src/
   app/
     api/export/docx/route.ts   docx 생성 (docx 라이브러리)
     api/export/xlsx/route.ts   xlsx 생성 (exceljs)
+    api/export/pptx/route.ts   pptx 생성 (pptxgenjs)
     page.tsx                   앱 진입점
   components/
     mindmap-canvas.tsx         마인드맵 캔버스 (노드, 연결선, 확대/이동)
@@ -79,11 +80,14 @@ src/
     table.ts                   마인드맵 → 표 변환 (병합·화살표·레인 배치)
     export-docx.ts             표 모델 → docx
     export-xlsx.ts             표 모델 → xlsx
+    export-pptx.ts             표 모델 → pptx (슬라이드 높이에 맞춰 페이지 나눔)
     use-plan.ts                상태 관리와 localStorage 보관
 ```
 
-`lib/table.ts`가 단일 기준입니다. 미리보기·docx·xlsx가 모두 같은 표 모델을 사용하므로 화면에서 본 그대로 파일에 저장됩니다.
+`lib/table.ts`가 단일 기준입니다. 미리보기·docx·xlsx·pptx가 모두 같은 표 모델을 사용하므로 화면에서 본 그대로 파일에 저장됩니다.
+
+pptx는 슬라이드 높이가 정해져 있어, 주제 블록 단위로 높이를 재서 한 장에 담기지 않으면 다음 장으로 넘기고 머리글 두 줄을 다시 얹습니다. 세로 병합된 주제는 쪼개지지 않습니다.
 
 ## 기술 스택
 
-Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · docx · exceljs
+Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · docx · exceljs · pptxgenjs

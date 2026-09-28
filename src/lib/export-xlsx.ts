@@ -1,9 +1,24 @@
 import ExcelJS from "exceljs";
 
 import type { Plan } from "./plan";
-import { HEADER_FILL, buildTableModel } from "./table";
+import {
+  BODY_FONT_PT,
+  HEADER_FILL,
+  SIDE_MARGIN_TWIPS,
+  TITLE_GAP_TWIPS,
+  TOP_MARGIN_TWIPS,
+  buildTableModel,
+} from "./table";
 
 const TWIPS_PER_CHAR = 105;
+const TWIPS_PER_INCH = 1440;
+const TWIPS_PER_POINT = 20;
+/** 인쇄할 때의 좌우 여백 3cm */
+const SIDE_MARGIN_INCHES = SIDE_MARGIN_TWIPS / TWIPS_PER_INCH;
+/** 인쇄할 때의 위쪽 여백 3cm */
+const TOP_MARGIN_INCHES = TOP_MARGIN_TWIPS / TWIPS_PER_INCH;
+/** 제목과 표 사이를 2cm 로 띄우는 빈 행의 높이(pt) */
+const TITLE_GAP_POINTS = TITLE_GAP_TWIPS / TWIPS_PER_POINT;
 
 export async function buildXlsx(plan: Plan): Promise<Buffer> {
   const model = buildTableModel(plan);
@@ -13,7 +28,21 @@ export async function buildXlsx(plan: Plan): Promise<Buffer> {
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet("주간계획", {
-    pageSetup: { orientation: "landscape", paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+    pageSetup: {
+      orientation: "landscape",
+      paperSize: 9,
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      margins: {
+        left: SIDE_MARGIN_INCHES,
+        right: SIDE_MARGIN_INCHES,
+        top: TOP_MARGIN_INCHES,
+        bottom: 0.5,
+        header: 0.3,
+        footer: 0.3,
+      },
+    },
     views: [{ state: "frozen", ySplit: model.includeTitle && model.title.trim() ? 3 : 2 }],
   });
 
@@ -31,6 +60,7 @@ export async function buildXlsx(plan: Plan): Promise<Buffer> {
     titleCell.font = { name: "맑은 고딕", size: 14, bold: true };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
     sheet.getRow(1).height = 24;
+    sheet.getRow(2).height = TITLE_GAP_POINTS;
     rowIndex = 3;
   }
 
@@ -57,7 +87,7 @@ export async function buildXlsx(plan: Plan): Promise<Buffer> {
 
       const target = sheet.getCell(rowIndex, column);
       target.value = cell.paragraphs.map((paragraph) => paragraph.text).join("\n");
-      target.font = { name: "맑은 고딕", size: 9, bold: cell.bold };
+      target.font = { name: "맑은 고딕", size: BODY_FONT_PT, bold: cell.bold };
       target.alignment = {
         horizontal: cell.align,
         vertical: cell.kind === "content" ? "top" : "middle",

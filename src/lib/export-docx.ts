@@ -18,7 +18,11 @@ import {
 
 import type { Plan } from "./plan";
 import {
+  BODY_FONT_PT,
   HEADER_FILL,
+  SIDE_MARGIN_TWIPS,
+  TITLE_GAP_TWIPS,
+  TOP_MARGIN_TWIPS,
   buildTableModel,
   type CellParagraph,
   type TableCellModel,
@@ -26,7 +30,8 @@ import {
 } from "./table";
 
 const FONT = "맑은 고딕";
-const BODY_SIZE = 18; // half-points = 9pt
+/** docx 는 half-point 단위를 쓴다. */
+const BODY_SIZE = BODY_FONT_PT * 2;
 const TITLE_SIZE = 26;
 
 const THIN_BORDER = { style: BorderStyle.SINGLE, size: 4, color: "000000" } as const;
@@ -109,7 +114,7 @@ export async function buildDocx(plan: Plan): Promise<Buffer> {
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
-        spacing: { before: 0, after: 160 },
+        spacing: { before: 0, after: TITLE_GAP_TWIPS },
         children: [
           new TextRun({ text: model.title.trim(), bold: true, font: FONT, size: TITLE_SIZE }),
         ],
@@ -132,7 +137,12 @@ export async function buildDocx(plan: Plan): Promise<Buffer> {
         properties: {
           page: {
             size: { orientation: PageOrientation.LANDSCAPE },
-            margin: { top: 720, right: 720, bottom: 720, left: 720 },
+            margin: {
+              top: TOP_MARGIN_TWIPS,
+              right: SIDE_MARGIN_TWIPS,
+              bottom: 720,
+              left: SIDE_MARGIN_TWIPS,
+            },
           },
         },
         children,

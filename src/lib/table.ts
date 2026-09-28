@@ -45,16 +45,30 @@ export type TableModel = {
   rows: TableRowModel[];
 };
 
-/** A4 가로 방향, 좌우 여백 720twips 기준 사용 가능 폭 */
-const USABLE_WIDTH = 15400;
-const TOPIC_WIDTH = 2600;
-const DAY_WIDTH = 1160;
+/** A4 가로 폭(twips) */
+const PAGE_WIDTH = 16838;
+/** 표 좌우 여백 3cm. docx 쪽 여백과 pptx·xlsx 여백이 이 값을 함께 쓴다. */
+export const SIDE_MARGIN_TWIPS = 1701;
+/** 표 위쪽 여백 3cm */
+export const TOP_MARGIN_TWIPS = 1701;
+/** 제목과 표 사이 간격 2cm */
+export const TITLE_GAP_TWIPS = 1134;
+const USABLE_WIDTH = PAGE_WIDTH - SIDE_MARGIN_TWIPS * 2;
+
+/** 열 너비 비율의 기준값. 실제 폭은 이 비율대로 사용 가능 폭에 맞춰 늘고 준다. */
+const REFERENCE_TOPIC = 2600;
+const REFERENCE_CONTENT = 7000;
+const REFERENCE_DAY = 1160;
 
 export const HEADER_FILL = "D9D9D9";
 
 export function columnWidths(dayCount: number): number[] {
-  const contentWidth = USABLE_WIDTH - TOPIC_WIDTH - DAY_WIDTH * dayCount;
-  return [TOPIC_WIDTH, contentWidth, ...Array.from({ length: dayCount }, () => DAY_WIDTH)];
+  const reference = REFERENCE_TOPIC + REFERENCE_CONTENT + REFERENCE_DAY * dayCount;
+  const scale = USABLE_WIDTH / reference;
+  const topic = Math.round(REFERENCE_TOPIC * scale);
+  const day = Math.round(REFERENCE_DAY * scale);
+  const content = USABLE_WIDTH - topic - day * dayCount;
+  return [topic, content, ...Array.from({ length: dayCount }, () => day)];
 }
 
 export function arrowText(span: number): string {
@@ -336,24 +350,31 @@ export function buildTableModel(plan: Plan): TableModel {
 const CJK = /[\u1100-\u11FF\u3000-\u303F\u3040-\u30FF\u3130-\u318F\u4E00-\u9FFF\uAC00-\uD7AF\uFF00-\uFFEF]/;
 
 /** 글자 폭을 전각 기준(em)으로 어림한다. */
-function textWidthEm(text: string): number {
+export function textWidthEm(text: string): number {
   let width = 0;
   for (const char of text) width += CJK.test(char) ? 1 : 0.55;
   return width;
 }
+
+/** 표 안의 본문 글자 크기(pt). 제목을 뺀 모든 칸이 이 크기를 쓴다. */
+export const BODY_FONT_PT = 10;
+
+const TWIPS_PER_POINT = 20;
+const EM_TWIPS = BODY_FONT_PT * TWIPS_PER_POINT;
+const LINE_TWIPS = Math.round(EM_TWIPS * 1.33);
 
 /**
  * 줄바꿈을 감안한 행 높이(twips). xlsx 는 병합 칸의 높이를 자동으로 맞추지
  * 못하므로 여기서 미리 계산해 둔다.
  */
 function estimateHeight(paragraphs: CellParagraph[], contentWidth: number): number {
-  const emPerLine = Math.max(10, (contentWidth - 160) / 180);
+  const emPerLine = Math.max(10, (contentWidth - 160) / EM_TWIPS);
   let lines = 0;
   for (const paragraph of paragraphs) {
     const usable = paragraph.hanging ? emPerLine - 1.2 : emPerLine;
     lines += Math.max(1, Math.ceil(textWidthEm(paragraph.text) / usable));
   }
-  return Math.max(560, lines * 240 + 60);
+  return Math.max(560, lines * LINE_TWIPS + 60);
 }
 
 export function planFileBaseName(plan: Plan): string {

@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveAs } from "file-saver";
-import { Download, FileSpreadsheet, FileText, Loader2, Upload } from "lucide-react";
+import {
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Presentation,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { InspectorPanel } from "@/components/inspector-panel";
@@ -15,7 +22,7 @@ import type { Selection } from "@/lib/selection";
 import { planFileBaseName } from "@/lib/table";
 import { usePlan } from "@/lib/use-plan";
 
-type ExportKind = "docx" | "xlsx";
+type ExportKind = "docx" | "xlsx" | "pptx";
 type View = "mindmap" | "table" | "edit";
 
 export function PlannerApp() {
@@ -157,6 +164,19 @@ export function PlannerApp() {
               <FileSpreadsheet className="size-4" />
             )}
             XLSX
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void exportFile("pptx")}
+            disabled={busy !== null}
+          >
+            {busy === "pptx" ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Presentation className="size-4" />
+            )}
+            PPTX
           </Button>
           <Button size="sm" onClick={() => void exportFile("docx")} disabled={busy !== null}>
             {busy === "docx" ? (
